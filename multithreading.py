@@ -5,6 +5,7 @@ import configparser
 from datetime import datetime
 
 from core_functions import get_ping, get_load_time, get_status
+from database.db import *
 
 logging.basicConfig(filename='MyLog.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 config = configparser.ConfigParser()
@@ -59,7 +60,16 @@ def main_loop(start_date: str, end_date: str, start_time: str, end_time: str, in
                 break
             if current_time.time() > end_time:
                 print('Time ended.')
-                break
+                count_result = len(results)
+                count_unsuccessfully = results.count(False)
+                up_or_down = check_percent(all_=count_result, any_=count_unsuccessfully)
+                if not up_or_down:
+                    add_log(project_id=5, server_address=target_addresses, message=f'Server {target_addresses} is down!')
+                    break
+                else:
+                    add_log(project_id=5, server_address=target_addresses,
+                            message=f'Server {target_addresses} is ok!')
+                    break
 
             if len(results) >= 5:
                 count_result = len(results)
@@ -70,42 +80,23 @@ def main_loop(start_date: str, end_date: str, start_time: str, end_time: str, in
 
     except Exception as e:
         # Log an exception message if an error occurs during the main loop
-        logging.exception("An error occurred: %s", str(e))
-
-
-# def send_requests_periodically(target_addresses: str, interval_minutes: int, second_interval_minutes: int,
-#                                selected_functions: list):
-#     """
-#     Send requests to the specified IP addresses at regular intervals.
-#
-#     Parameters:
-#     - target_addresses (list): IP addresses to send requests to.
-#     - interval_minutes (int): The interval in minutes between each request.
-#
-#     Returns:
-#     None
-#     """
-#     while True:
-#         Perform the desired requests or checks on target IP addresses
-# check_ip_status(target_addresses, second_interval_minutes, selected_functions)
-#
-# Sleep for the specified interval
-# time.sleep(interval_minutes * 6)  # Convert minutes to seconds
+        # logging.exception("An error occurred: %s", str(e))
+        add_log(project_id=5, server_address=target_addresses, message=f"An error occurred: {e}")
 
 
 def check_selected_function(address: str, second_interval_minutes, selected_functions):
     """
-    Check the status of IP addresses concurrently using multi-threading.
+    Check the status of addresses concurrently using multi-threading.
 
     Parameters:
-    - ip: A IP addresses to be checked.
+    - addresses: A IP addresses to be checked.
 
     Returns:
     None
 
     Logs:
-    - If any of the IP addresses is down (unreachable), an error message is logged for each affected IP.
-    - If all IP addresses are reachable, an info message is logged indicating that all servers are okay.
+    - If any of the addresses is down (unreachable), an error message is logged for each affected IP.
+    - If all addresses are reachable, an info message is logged indicating that all servers are okay.
     """
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
@@ -130,9 +121,9 @@ def check_selected_function(address: str, second_interval_minutes, selected_func
             load_results = [None]
 
         if "All" in selected_functions:
-            ping_results = list(executor.map(get_ping, address))
-            status_results = list(executor.map(get_status, address))
-            load_results = list(executor.map(get_load_time, address))
+            ping_results = list(executor.map(get_ping, [address]))
+            status_results = list(executor.map(get_status, [address]))
+            load_results = list(executor.map(get_load_time, [address]))
 
         # Identify IP addresses where ping, status, and load time are all 0
         final_result = [i for i, (ping, status, load) in
@@ -143,7 +134,8 @@ def check_selected_function(address: str, second_interval_minutes, selected_func
             # Log an error message for each IP address that is down
             ips_is_down = []
             for ip in final_result:
-                logging.error(f'Server with IP {ip} is down.')
+                # logging.error(f'Server with IP {ip} is down.')
+                add_log(project_id=5, server_address=address, message=f'Server with IP {ip} is down.')
                 ips_is_down.append(ip)
 
             second_check_ping(ips_is_down, second_interval_minutes)
@@ -164,9 +156,11 @@ def second_check_ping(ips_is_down, second_interval_minutes):
                 else:
                     server_index = ping_results.index(1)
                     live_server = ips_is_down.pop(server_index)
-                    logging.info(f'Servers {live_server} is okay.')
+                    # logging.info(f'Servers {live_server} is okay.')
+                    add_log(project_id=5, server_address=live_server, message=f'Servers {live_server} is okay.')
             # Log an info message indicating that all servers are okay
-            logging.info(f'All servers are okay.')
+            # logging.info(f'All servers are okay.')
+            add_log(project_id=5, server_address=', '.join(ips_is_down), message='All servers are okay.')
 
 
 def check_percent(all_, any_):

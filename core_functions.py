@@ -105,7 +105,7 @@ def get_load_time(address: str) -> bool:
         start_time = datetime.now().second
 
         # Send an HTTP GET request to the specified address
-        response = requests.get(f"http://{address}", timeout=20)
+        requests.get(f"http://{address}", timeout=20)
 
         # Record the end time of the HTTP request
         end_time = datetime.now().second
@@ -128,12 +128,3 @@ def get_load_time(address: str) -> bool:
         # Handle exceptions and return an error message
         print(f'Load {address} unsuccessfully!')
         return False
-
-
-# schedule.every().hour.do(get_ping)
-# schedule.every(30).minutes.do(get_status)
-# schedule.every(6).hours.do(get_load_time)
-#
-# while True:
-#     schedule.run_pending()
-#     time.sleep(1)

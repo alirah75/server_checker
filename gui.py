@@ -5,6 +5,8 @@ from tkinter import PhotoImage
 from tkinter import messagebox
 from datetime import datetime, timedelta
 
+from database.db import *
+
 
 def start_monitoring(start_date, end_date, start_time, end_time, interval_minutes, second_interval_minutes,
                      target_addresses, selected_functions):
@@ -20,6 +22,9 @@ def start_monitoring(start_date, end_date, start_time, end_time, interval_minute
     print("Selected Functions:", selected_functions)
     target_addresses = target_addresses
 
+    add_information(start_date, end_date, start_time, end_time, interval_minutes, second_interval_minutes,
+                    target_addresses, ', '.join(selected_functions), 1)
+
     main_loop(start_date, end_date, start_time, end_time, interval_minutes, second_interval_minutes,
               target_addresses, selected_functions)
 
@@ -34,7 +39,7 @@ def show_error(message):
 
 def validate_and_start(start_date_entry, end_date_entry, start_time_entry, end_time_entry, interval_minutes_entry,
                        second_interval_minutes_entry, target_addresses_entry, functions):
-    # خواندن و اعتبارسنجی ورودی‌ها از فرم
+    # read data and validation
     start_date = start_date_entry.get()
     end_date = end_date_entry.get()
     start_time = start_time_entry.get()
@@ -45,13 +50,13 @@ def validate_and_start(start_date_entry, end_date_entry, start_time_entry, end_t
 
     selected_functions = []
     for var, option_text in zip(functions, ["Get Ping", "Get Status", "Get Load Time", "All"]):
-        if var.get():  # اگر مقدار متغیر متصل به گزینه True باشد
+        if var.get():
             selected_functions.append(option_text)
 
     if "All" in selected_functions:
         selected_functions = ["All"]
 
-    # اعتبارسنجی تاریخ‌ها و زمان‌ها
+    # date and time validation
     try:
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
@@ -61,7 +66,6 @@ def validate_and_start(start_date_entry, end_date_entry, start_time_entry, end_t
         show_error("Invalid date or time format.")
         return
 
-    # اعتبارسنجی سایر ورودی‌ها (می‌توانید اعتبارسنجی دقیق‌تری انجام دهید)
     if not interval_minutes.isdigit() or not second_interval_minutes.isdigit():
         show_error("Interval values must be integers.")
         return
@@ -70,10 +74,11 @@ def validate_and_start(start_date_entry, end_date_entry, start_time_entry, end_t
         show_error("Choose at least one option.")
         return
 
-    # شروع مانیتورینگ با ورودی‌های اعتبارسنجی شده
+    # start monitoring
     start_monitoring(str(start_date), str(end_date), str(start_time), str(end_time), int(interval_minutes),
                      int(second_interval_minutes), target_addresses, selected_functions)
     messagebox.showinfo('Finish', "The program ended successfully.")
+    add_log(project_id=5, server_address=target_addresses, message="The program ended successfully.")
     return
 
 
@@ -83,7 +88,6 @@ def update_clock(label):
     label.after(1000, lambda: update_clock(label))
 
 
-# تابع برای متوقف کردن برنامه
 def stop_program(root):
     root.destroy()
 
@@ -121,7 +125,7 @@ def create_monitoring_form(window):
     start_time_entry.grid(row=2, column=1)
 
     tk.Label(window, text="End Time").grid(row=3, column=0)
-    end_time = datetime.now() + timedelta(hours=5)
+    end_time = datetime.now() + timedelta(hours=1)
     end_time_str = end_time.strftime("%H:%M:%S")
     end_time_entry = tk.Entry(window)
     end_time_entry.insert(0, end_time_str)
