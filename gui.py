@@ -1,11 +1,8 @@
 import sys
-
-from PyQt5 import QtCore, QtGui, QtWidgets
 import uuid
 
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
-
-from multithreading import main_loop
 from worker_thread import WorkerThread
 
 
@@ -33,7 +30,7 @@ class Ui_Dialog(object):
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.startDateLabel)
         self.startDateEdit = QtWidgets.QDateTimeEdit(self.formLayoutWidget)
         self.startDateEdit.setMaximumSize(QtCore.QSize(167, 16777215))
-        self.startDateEdit.setDate(QtCore.QDate(2024, 9, 14))
+        self.startDateEdit.setDateTime(QtCore.QDateTime.currentDateTime())  # Set current date and time
         self.startDateEdit.setMinimumDate(QtCore.QDate(2024, 1, 1))
         self.startDateEdit.setCurrentSection(QtWidgets.QDateTimeEdit.DaySection)
         self.startDateEdit.setCalendarPopup(True)
@@ -180,8 +177,8 @@ class MainApp(QtWidgets.QDialog, Ui_Dialog):
             QtWidgets.QMessageBox.warning(self, "Warning", "Please select at least one option.")
             return
 
-        self.worker_thread = WorkerThread(start_date, end_date, start_time, end_time, interval_minutes, second_interval_minutes,
-                                          target_address, selected_functions)
+        self.worker_thread = WorkerThread(start_date, end_date, start_time, end_time, interval_minutes,
+                                          second_interval_minutes, target_address, selected_functions)
         self.worker_thread.log_signal.connect(self.update_log)
         self.worker_thread.start()
 
@@ -201,35 +198,6 @@ class MainApp(QtWidgets.QDialog, Ui_Dialog):
 
     def update_log(self, message):
         QMessageBox.information(self, "Log", message)
-
-    # def sendData(self):
-    #     server_address = self.serverAdDressLineEdit.text()
-    #     start_date = self.startDateEdit.dateTime().toString(QtCore.Qt.ISODate)
-    #     end_date = self.endDateEdit.dateTime().toString(QtCore.Qt.ISODate)
-    #     interval_minutes = self.intervalMinutesLineEdit.value()
-    #     second_interval_minutes = self.secondIntervalMinutesLineEdit.value()
-    #
-    #     options = []
-    #     for i in range(self.optionsLayout.count()):
-    #         checkbox = self.optionsLayout.itemAt(i).widget()
-    #         if isinstance(checkbox, QtWidgets.QCheckBox) and checkbox.isChecked():
-    #             options.append(checkbox.text())
-    #
-    #     if not options:
-    #         QtWidgets.QMessageBox.warning(self, "Warning", "Please select at least one option.")
-    #         return
-    #
-    #     print("Form ID:", self.form_id)
-    #     print("Server Address:", server_address)
-    #     print("Start Date:", start_date)
-    #     print("End Date:", end_date)
-    #     print("Interval Minutes:", interval_minutes)
-    #     print("Second Interval Minutes:", second_interval_minutes)
-    #     print("Options:", options)
-
-    # def sendFormID(self):
-    #     print("Form ID:", self.form_id)
-    #     self.close()
 
 
 if __name__ == "__main__":
