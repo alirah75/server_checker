@@ -60,10 +60,10 @@ def get_status(address: str) -> bool:
     try:
         # Send an HTTP GET request to the specified address
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0'}
-        if 'http://' or 'https://' not in address:
-            response = requests.get(f"http://{address}", headers=headers, timeout=10)
+        if address.startswith('http://') or address.startswith('https://'):
+            response = requests.get(address, headers=headers, timeout=100, proxies={'http': '', 'https': ''})
         else:
-            response = requests.get(address, headers=headers, timeout=10)
+            response = requests.get(f"http://{address}", headers=headers, timeout=100, proxies={'http': '', 'https': ''})
 
         # Get the HTTP status code from the response
         status = response.status_code
